@@ -1,0 +1,23 @@
+{
+  "name": "angi-mcp-server",
+  "version": "1.0.0",
+  "description": "Angi MCP Server - Demo Prototype for LLM Integration",
+  "type": "module",
+  "bin": {
+    "angi-mcp": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "tsc --watch",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}
