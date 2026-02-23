@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Angi MCP Server Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .status {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .tool-card h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .tool-card p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result.error {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .result.success {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .result-content {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .endpoint-info {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .endpoint-info h3 {
+            color: #667eea;
+            margin-bottom: 16px;
+        }
+
+        .endpoint-box {
+            background: #f9fafb;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+            margin-bottom: 12px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .optional {
+            color: #999;
+            font-size: 12px;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Angi MCP Server Demo</h1>
+            <p>Live demonstration of MCP tools for home services</p>
+        </div>
+
+        <div class="status">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <strong>Server Status:</strong> <span id="serverStatus">Checking...</span>
+            </div>
+        </div>
+
+        <div class="tools-grid">
+            <!-- Tool 1: Search Professionals -->
+            <div class="tool-card">
+                <h2>🔍 Search Professionals</h2>
+                <p>Find verified home service professionals by category and location.</p>
+                
+                <form id="searchForm">
+                    <div class="form-group">
+                        <label>Service Category *</label>
+                        <input type="text" id="category" placeholder="e.g., plumbing, electrical, hvac" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Zip Code <span class="optional">(optional)</span></label>
+                        <input type="text" id="zip_code" placeholder="e.g., 10001" maxlength="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Availability <span class="optional">(optional)</span></label>
+                        <select id="availability">
+                            <option value="any">Any time</option>
+                            <option value="available_now">Available now</option>
+                            <option value="available_this_week">This week</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Search Professionals</button>
+                </form>
+                <div id="searchResult" class="result"></div>
+            </div>
+
+            <!-- Tool 2: Get Home Advice -->
+            <div class="tool-card">
+                <h2>💡 Get Home Advice</h2>
+                <p>Ask questions about home improvement, repairs, and maintenance.</p>
+                
+                <form id="adviceForm">
+                    <div class="form-group">
+                        <label>Your Question *</label>
+                        <textarea id="question" placeholder="e.g., How do I fix a leaky faucet?" required></textarea>
+                    </div>
+                    <button type="submit" class="btn">Get Advice</button>
+                </form>
+                <div id="adviceResult" class="result"></div>
+            </div>
+
+            <!-- Tool 3: Request Quote -->
+            <div class="tool-card">
+                <h2>📋 Request Quote</h2>
+                <p>Submit a quote request to a professional (use ID from search results).</p>
+                
+                <form id="quoteForm">
+                    <div class="form-group">
+                        <label>Professional ID *</label>
+                        <input type="text" id="professional_id" placeholder="e.g., pro-001" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Service Needed *</label>
+                        <input type="text" id="service_needed" placeholder="e.g., Fix leaking pipe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Your Name *</label>
+                        <input type="text" id="homeowner_name" placeholder="e.g., John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Your Zip Code *</label>
+                        <input type="text" id="homeowner_zip" placeholder="e.g., 10001" maxlength="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Timing *</label>
+                        <select id="preferred_timing" required>
+                            <option value="as_soon_as_possible">ASAP</option>
+                            <option value="within_a_week">Within a week</option>
+                            <option value="within_a_month">Within a month</option>
+                            <option value="just_getting_estimates">Just getting estimates</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Additional Notes <span class="optional">(optional)</span></label>
+                        <textarea id="notes" placeholder="Any additional details..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">Request Quote</button>
+                </form>
+                <div id="quoteResult" class="result"></div>
+            </div>
+        </div>
+
+        <div class="endpoint-info">
+            <h3>🔗 MCP Endpoint Information</h3>
+            <p><strong>Public MCP URL:</strong></p>
+            <div class="endpoint-box">https://angi-mcp-production.up.railway.app/mcp</div>
+            <p><strong>Health Check:</strong></p>
+            <div class="endpoint-box">https://angi-mcp-production.up.railway.app/health</div>
+            <p><strong>GitHub Repository:</strong></p>
+            <div class="endpoint-box">https://github.com/piprads/angi-mcp</div>
+        </div>
+    </div>
+
+    <script>
+        const MCP_URL = 'https://angi-mcp-production.up.railway.app/mcp';
+        const HEALTH_URL = 'https://angi-mcp-production.up.railway.app/health';
+
+        // Check server status
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(HEALTH_URL);
+                const data = await response.json();
+                document.getElementById('serverStatus').textContent = `✓ Online - ${data.server} v${data.version}`;
+            } catch (error) {
+                document.getElementById('serverStatus').textContent = '✗ Offline';
+            }
+        }
+
+        // Call MCP tool
+        async function callMCPTool(toolName, params) {
+            const response = await fetch(MCP_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: Date.now(),
+                    method: 'tools/call',
+                    params: {
+                        name: toolName,
+                        arguments: params
+                    }
+                })
+            });
+
+            const data = await response.json();
+            return data;
+        }
+
+        // Display result
+        function displayResult(elementId, data, isError = false) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.className = 'result show ' + (isError ? 'error' : 'success');
+            
+            let content = '';
+            if (isError) {
+                content = data.message || JSON.stringify(data, null, 2);
+            } else if (data.result && data.result.content && data.result.content[0]) {
+                const text = data.result.content[0].text;
+                try {
+                    const parsed = JSON.parse(text);
+                    content = JSON.stringify(parsed, null, 2);
+                } catch {
+                    content = text;
+                }
+            } else {
+                content = JSON.stringify(data, null, 2);
+            }
+            
+            resultDiv.innerHTML = `
+                <div class="result-title">${isError ? '❌ Error' : '✅ Success'}</div>
+                <div class="result-content">${content}</div>
+            `;
+        }
+
+        // Search Professionals Form
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Searching...';
+            
+            try {
+                const params = {
+                    category: document.getElementById('category').value,
+                    zip_code: document.getElementById('zip_code').value || undefined,
+                    availability: document.getElementById('availability').value,
+                    max_results: 3
+                };
+                
+                const result = await callMCPTool('search_professionals', params);
+                displayResult('searchResult', result);
+            } catch (error) {
+                displayResult('searchResult', error, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Search Professionals';
+            }
+        });
+
+        // Get Advice Form
+        document.getElementById('adviceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Getting advice...';
+            
+            try {
+                const params = {
+                    question: document.getElementById('question').value
+                };
+                
+                const result = await callMCPTool('get_home_advice', params);
+                displayResult('adviceResult', result);
+            } catch (error) {
+                displayResult('adviceResult', error, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Get Advice';
+            }
+        });
+
+        // Request Quote Form
+        document.getElementById('quoteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Submitting...';
+            
+            try {
+                const params = {
+                    professional_id: document.getElementById('professional_id').value,
+                    service_needed: document.getElementById('service_needed').value,
+                    homeowner_name: document.getElementById('homeowner_name').value,
+                    homeowner_zip: document.getElementById('homeowner_zip').value,
+                    preferred_timing: document.getElementById('preferred_timing').value,
+                    notes: document.getElementById('notes').value || undefined
+                };
+                
+                const result = await callMCPTool('request_quote', params);
+                displayResult('quoteResult', result);
+            } catch (error) {
+                displayResult('quoteResult', error, true);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Request Quote';
+            }
+        });
+
+        // Check status on load
+        checkServerStatus();
+    </script>
+</body>
+</html>
