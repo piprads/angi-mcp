@@ -1,8 +1,22 @@
-# Angi MCP Server -- Demo Prototype
+# Angi MCP Server — Live Demo
 
-A working Model Context Protocol (MCP) server demonstrating how Angi could integrate with LLM platforms like ChatGPT, Claude, and Google Gemini.
+A working Model Context Protocol (MCP) server demonstrating how Angi integrates with LLM platforms.
 
-Live MCP endpoint (after deploy): https://your-app.railway.app/mcp
+## 🎯 Quick Start
+
+**🌐 Try the Live Demo:** https://piprads.github.io/angi-mcp/
+
+**📖 Full Documentation:** [DEMO.md](./DEMO.md) — Complete guide with sample inputs/outputs, architecture, and case study context
+
+**🚀 MCP Server:** https://angi-mcp-production.up.railway.app
+
+## 🛠️ Three MCP Tools
+
+This demo implements three tools that address homeowner use cases:
+
+1. **`search_professionals`** — Find verified Angi pros by category, zip code, and availability
+2. **`get_home_advice`** — Answer home improvement questions with cost estimates and DIY guidance  
+3. **`request_quote`** — Submit quote requests to professionals (lead generation)
 
 ---
 
