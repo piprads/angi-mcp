@@ -11,8 +11,8 @@ paths:
   /api/search:
     post:
       operationId: searchProfessionals
-      summary: Search for home service professionals
-      description: Find verified Angi professionals by service category, location, and availability. Returns professionals with ratings, reviews, pricing, and contact information.
+      summary: Find and search for home service professionals by location
+      description: "**USE THIS when the user wants to FIND, SEARCH FOR, or LOCATE professionals** (e.g., 'find a plumber', 'looking for an electrician', 'I need a handyman'). Searches verified Angi professionals by service category (plumbing, electrical, handyman, hvac, etc.), zip code, and availability. Returns professionals with ratings, reviews, pricing, and contact information."
       requestBody:
         required: true
         content:
@@ -24,8 +24,8 @@ paths:
               properties:
                 category:
                   type: string
-                  description: Service category like plumbing, electrical, hvac, roofing, cleaning, or remodeling
-                  example: plumbing
+                  description: "Service category: plumbing, electrical, handyman, hvac, roofing, cleaning, remodeling. Extract from user request (e.g., 'electrician' = electrical, 'plumber' = plumbing)."
+                  example: electrical
                 zip_code:
                   type: string
                   description: 5-digit US zip code for the homeowner's location
@@ -120,8 +120,8 @@ paths:
   /api/advice:
     post:
       operationId: getHomeAdvice
-      summary: Get home improvement advice
-      description: Answer homeowner questions about home repairs, maintenance, and renovations. Provides expert guidance including DIY tips, cost estimates, difficulty levels, and whether to hire a professional.
+      summary: Get DIY advice and home improvement tips
+      description: "**USE THIS ONLY for HOW-TO questions** (e.g., 'how do I fix a leak?', 'what causes mold?', 'tips for painting'). Provides expert DIY guidance, cost estimates, difficulty levels, and recommendations. **DO NOT use this for finding/searching professionals - use searchProfessionals instead.**"
       requestBody:
         required: true
         content:
