@@ -21,6 +21,7 @@ paths:
               type: object
               required:
                 - category
+                - zip_code
               properties:
                 category:
                   type: string
@@ -28,8 +29,8 @@ paths:
                   example: electrical
                 zip_code:
                   type: string
-                  description: 5-digit US zip code for the homeowner's location
-                  example: "10001"
+                  description: "REQUIRED: 5-digit US zip code for the homeowner's location. Always extract from user query (e.g., 'San Francisco 94102' = '94102', 'Los Angeles 90001' = '90001'). If user doesn't provide, ask for their zip code."
+                  example: "94102"
                 availability:
                   type: string
                   enum: [any, available_now, available_this_week]
