@@ -4,11 +4,13 @@ A working Model Context Protocol (MCP) server demonstrating how Angi integrates 
 
 ## 🎯 Quick Start
 
-**🌐 Try the Live Demo:** https://piprads.github.io/angi-mcp/
+**🤖 ChatGPT Demo:** https://chatgpt.com/g/g-699cf50686808191b07ade15b4b7284d-home-services-assistant-mcp-demo (ChatGPT Plus required)
 
-**💬 ChatGPT Custom GPT:** [Setup Guide](./CHATGPT_SETUP.md) — Create your own AI assistant (requires ChatGPT Plus)
+**🌐 Web Demo:** https://piprads.github.io/angi-mcp/
 
-**📖 Full Documentation:** [DEMO.md](./DEMO.md) — Complete guide with sample inputs/outputs, architecture, and case study context
+**💬 ChatGPT Setup:** [Guide](./CHATGPT_SETUP.md) | [Demo Docs](./CHATGPT_DEMO.md)
+
+**📖 Full Documentation:** [DEMO.md](./DEMO.md) — Complete technical guide
 
 **🚀 MCP Server:** https://angi-mcp-production.up.railway.app
 
