@@ -220,6 +220,16 @@ server.registerTool("request_quote", {
 // ---- HTTP Server (StreamableHTTP transport) --------------------------------
 const PORT = parseInt(process.env.PORT ?? "3000", 10);
 const httpServer = http.createServer(async (req, res) => {
+    // Add CORS headers for browser access
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    // Handle preflight requests
+    if (req.method === "OPTIONS") {
+        res.writeHead(204);
+        res.end();
+        return;
+    }
     // Health check endpoint
     if (req.method === "GET" && req.url === "/health") {
         res.writeHead(200, { "Content-Type": "application/json" });
