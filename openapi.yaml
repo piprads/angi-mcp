@@ -48,50 +48,74 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [success, professionals]
                 properties:
                   success:
                     type: boolean
+                    description: Whether the search was successful
                   totalFound:
                     type: integer
+                    description: Number of professionals found
                   searchedCategory:
                     type: string
+                    description: The category that was searched
                   zipCode:
                     type: string
+                    description: The zip code searched or "all areas"
+                  message:
+                    type: string
+                    description: Message when no results found
                   professionals:
                     type: array
+                    description: Array of matching professionals
                     items:
                       type: object
+                      required: [id, name, businessName, rating, phone]
                       properties:
                         id:
                           type: string
+                          description: Professional ID (use this for requesting quotes)
                         name:
                           type: string
+                          description: Professional's name
                         businessName:
                           type: string
+                          description: Business name
                         category:
                           type: string
+                          description: Service category
                         rating:
                           type: number
+                          description: Star rating out of 5
                         reviewCount:
                           type: integer
+                          description: Number of reviews
                         yearsInBusiness:
                           type: integer
+                          description: Years in business
                         availability:
                           type: string
+                          description: Current availability status
                         hourlyRate:
                           type: string
+                          description: Hourly rate or pricing info
                         phone:
                           type: string
+                          description: Contact phone number
                         bio:
                           type: string
+                          description: Professional's bio
                         badges:
                           type: array
+                          description: Certifications and badges
                           items:
                             type: string
                         angiProfileUrl:
                           type: string
+                          description: Link to Angi profile
                   ctaMessage:
                     type: string
+                    description: Call-to-action message
 
   /api/advice:
     post:
@@ -118,26 +142,35 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [success, question, answer]
                 properties:
                   success:
                     type: boolean
+                    description: Whether advice was found
                   question:
                     type: string
+                    description: The original question
                   topic:
                     type: string
+                    description: The topic identified
                   answer:
                     type: string
+                    description: Detailed expert advice
                   estimatedCost:
                     type: string
+                    description: Cost estimate for the project
                   difficulty:
                     type: string
                     enum: [DIY, hire_a_pro, either]
+                    description: Whether DIY is recommended or hire a pro
                   relatedCategories:
                     type: array
+                    description: Related professional categories
                     items:
                       type: string
                   suggestedAction:
                     type: string
+                    description: Recommended next steps
 
   /api/quote:
     post:
@@ -189,15 +222,23 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [success, message]
                 properties:
                   success:
                     type: boolean
+                    description: Whether quote request succeeded
+                  error:
+                    type: string
+                    description: Error message if professional not found
                   leadId:
                     type: string
+                    description: Unique lead tracking ID
                   message:
                     type: string
+                    description: Confirmation message
                   professional:
                     type: object
+                    description: Professional receiving the quote request
                     properties:
                       name:
                         type: string
@@ -213,6 +254,7 @@ paths:
                           type: string
                   quoteDetails:
                     type: object
+                    description: Details of the quote request
                     properties:
                       service:
                         type: string
@@ -226,7 +268,9 @@ paths:
                         type: string
                   nextSteps:
                     type: array
+                    description: What happens next
                     items:
                       type: string
                   angiTrackingUrl:
                     type: string
+                    description: URL to track the quote request
