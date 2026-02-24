@@ -15,6 +15,118 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { z } from "zod";
 import http from "http";
 import { PROFESSIONALS, HOME_ADVICE } from "./mockData.js";
+// ---- Tool Implementation Functions ------------------------------------------
+async function searchProfessionals({ category, zip_code, availability = "any", max_results = 3 }) {
+    const normalizedCategory = category.toLowerCase().trim();
+    let results = PROFESSIONALS.filter((pro) => {
+        const categoryMatch = pro.category.includes(normalizedCategory) ||
+            pro.subCategories.some((s) => s.includes(normalizedCategory)) ||
+            normalizedCategory.includes(pro.category);
+        const zipMatch = !zip_code || pro.zipCodes.includes(zip_code);
+        const availabilityMatch = availability === "any" ||
+            pro.availability === availability;
+        return categoryMatch && zipMatch && availabilityMatch;
+    });
+    results = results
+        .sort((a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount)
+        .slice(0, max_results);
+    if (results.length === 0) {
+        return {
+            success: false,
+            message: `No professionals found for "${category}"${zip_code ? ` in zip ${zip_code}` : ""}. Try broadening your search.`,
+            results: [],
+        };
+    }
+    const formatted = results.map((pro) => ({
+        id: pro.id,
+        name: pro.name,
+        businessName: pro.businessName,
+        category: pro.category,
+        rating: pro.rating,
+        reviewCount: pro.reviewCount,
+        yearsInBusiness: pro.yearsInBusiness,
+        availability: pro.availability.replace(/_/g, " "),
+        hourlyRate: pro.hourlyRate ?? "Contact for pricing",
+        phone: pro.phone,
+        bio: pro.bio,
+        badges: pro.badges,
+        angiProfileUrl: `https://www.angi.com/companylist/us/${pro.id}`,
+    }));
+    return {
+        success: true,
+        totalFound: results.length,
+        searchedCategory: category,
+        zipCode: zip_code ?? "all areas",
+        professionals: formatted,
+        ctaMessage: "Ready to get quotes? Use the request_quote tool to connect with any of these professionals.",
+    };
+}
+async function getHomeAdvice({ question }) {
+    const q = question.toLowerCase();
+    let bestMatch = HOME_ADVICE.find((advice) => advice.keywords.some((kw) => q.includes(kw))) ?? HOME_ADVICE.find((advice) => q.includes(advice.topic));
+    if (!bestMatch) {
+        return {
+            success: false,
+            question,
+            answer: "I don't have specific guidance for that question right now. " +
+                "Use search_professionals to find a local expert for a free estimate.",
+            relatedCategories: [],
+        };
+    }
+    return {
+        success: true,
+        question,
+        topic: bestMatch.topic,
+        answer: bestMatch.answer,
+        estimatedCost: bestMatch.estimatedCost ?? "Varies -- get quotes",
+        difficulty: bestMatch.difficulty,
+        relatedCategories: bestMatch.relatedCategories,
+        suggestedAction: bestMatch.difficulty === "hire_a_pro"
+            ? `This is best left to a professional. Use search_professionals to find a verified ${bestMatch.relatedCategories[0]} pro near you.`
+            : bestMatch.difficulty === "DIY"
+                ? "This is a manageable DIY project. See guidance above."
+                : "You can DIY this or hire a pro -- see guidance above.",
+    };
+}
+async function requestQuote({ professional_id, service_needed, homeowner_name, homeowner_zip, preferred_timing, notes }) {
+    const pro = PROFESSIONALS.find((p) => p.id === professional_id);
+    if (!pro) {
+        return {
+            success: false,
+            error: `Professional "${professional_id}" not found. Use search_professionals first.`,
+        };
+    }
+    const leadId = `LEAD-${Date.now().toString(36).toUpperCase()}`;
+    const estimatedResponseTime = pro.availability === "available_now" ? "within 1-2 hours" :
+        pro.availability === "available_this_week" ? "within 24 hours" :
+            "within 2-3 business days";
+    return {
+        success: true,
+        leadId,
+        message: `Your quote request has been sent to ${pro.name} at ${pro.businessName}!`,
+        professional: {
+            name: pro.name,
+            businessName: pro.businessName,
+            phone: pro.phone,
+            rating: pro.rating,
+            badges: pro.badges,
+        },
+        quoteDetails: {
+            service: service_needed,
+            homeownerName: homeowner_name,
+            zip: homeowner_zip,
+            timing: preferred_timing.replace(/_/g, " "),
+            notes: notes ?? "None provided",
+        },
+        nextSteps: [
+            `${pro.name} should respond ${estimatedResponseTime}.`,
+            "You'll receive a confirmation email from Angi with your lead ID.",
+            "Track this request at angi.com/my-projects.",
+            "We recommend getting 2-3 quotes before deciding.",
+        ],
+        angiTrackingUrl: `https://www.angi.com/my-projects/${leadId}`,
+    };
+}
 // ---- Server Instantiation --------------------------------------------------
 const server = new McpServer({
     name: "angi-mcp-server",
@@ -49,58 +161,12 @@ server.registerTool("search_professionals", {
             .describe("Maximum number of results to return (1-5)."),
     },
     annotations: { readOnlyHint: true, openWorldHint: false },
-}, async ({ category, zip_code, availability = "any", max_results = 3 }) => {
-    const normalizedCategory = category.toLowerCase().trim();
-    let results = PROFESSIONALS.filter((pro) => {
-        const categoryMatch = pro.category.includes(normalizedCategory) ||
-            pro.subCategories.some((s) => s.includes(normalizedCategory)) ||
-            normalizedCategory.includes(pro.category);
-        const zipMatch = !zip_code || pro.zipCodes.includes(zip_code);
-        const availabilityMatch = availability === "any" ||
-            pro.availability === availability;
-        return categoryMatch && zipMatch && availabilityMatch;
-    });
-    results = results
-        .sort((a, b) => b.rating - a.rating || b.reviewCount - a.reviewCount)
-        .slice(0, max_results);
-    if (results.length === 0) {
-        return {
-            content: [{
-                    type: "text",
-                    text: JSON.stringify({
-                        success: false,
-                        message: `No professionals found for "${category}"${zip_code ? ` in zip ${zip_code}` : ""}. Try broadening your search.`,
-                        results: [],
-                    }),
-                }],
-        };
-    }
-    const formatted = results.map((pro) => ({
-        id: pro.id,
-        name: pro.name,
-        businessName: pro.businessName,
-        category: pro.category,
-        rating: pro.rating,
-        reviewCount: pro.reviewCount,
-        yearsInBusiness: pro.yearsInBusiness,
-        availability: pro.availability.replace(/_/g, " "),
-        hourlyRate: pro.hourlyRate ?? "Contact for pricing",
-        phone: pro.phone,
-        bio: pro.bio,
-        badges: pro.badges,
-        angiProfileUrl: `https://www.angi.com/companylist/us/${pro.id}`,
-    }));
+}, async (params) => {
+    const result = await searchProfessionals(params);
     return {
         content: [{
                 type: "text",
-                text: JSON.stringify({
-                    success: true,
-                    totalFound: results.length,
-                    searchedCategory: category,
-                    zipCode: zip_code ?? "all areas",
-                    professionals: formatted,
-                    ctaMessage: "Ready to get quotes? Use the request_quote tool to connect with any of these professionals.",
-                }),
+                text: JSON.stringify(result),
             }],
     };
 });
@@ -116,40 +182,12 @@ server.registerTool("get_home_advice", {
             .describe("The homeowner's question about home improvement, repair, or renovation."),
     },
     annotations: { readOnlyHint: true, openWorldHint: false },
-}, async ({ question }) => {
-    const q = question.toLowerCase();
-    let bestMatch = HOME_ADVICE.find((advice) => advice.keywords.some((kw) => q.includes(kw))) ?? HOME_ADVICE.find((advice) => q.includes(advice.topic));
-    if (!bestMatch) {
-        return {
-            content: [{
-                    type: "text",
-                    text: JSON.stringify({
-                        success: false,
-                        question,
-                        answer: "I don't have specific guidance for that question right now. " +
-                            "Use search_professionals to find a local expert for a free estimate.",
-                        relatedCategories: [],
-                    }),
-                }],
-        };
-    }
+}, async (params) => {
+    const result = await getHomeAdvice(params);
     return {
         content: [{
                 type: "text",
-                text: JSON.stringify({
-                    success: true,
-                    question,
-                    topic: bestMatch.topic,
-                    answer: bestMatch.answer,
-                    estimatedCost: bestMatch.estimatedCost ?? "Varies -- get quotes",
-                    difficulty: bestMatch.difficulty,
-                    relatedCategories: bestMatch.relatedCategories,
-                    suggestedAction: bestMatch.difficulty === "hire_a_pro"
-                        ? `This is best left to a professional. Use search_professionals to find a verified ${bestMatch.relatedCategories[0]} pro near you.`
-                        : bestMatch.difficulty === "DIY"
-                            ? "This is a manageable DIY project. See guidance above."
-                            : "You can DIY this or hire a pro -- see guidance above.",
-                }),
+                text: JSON.stringify(result),
             }],
     };
 });
@@ -168,52 +206,12 @@ server.registerTool("request_quote", {
             .describe("How urgently the homeowner needs the service."),
         notes: z.string().optional().describe("Additional project details."),
     },
-}, async ({ professional_id, service_needed, homeowner_name, homeowner_zip, preferred_timing, notes }) => {
-    const pro = PROFESSIONALS.find((p) => p.id === professional_id);
-    if (!pro) {
-        return {
-            content: [{
-                    type: "text",
-                    text: JSON.stringify({
-                        success: false,
-                        error: `Professional "${professional_id}" not found. Use search_professionals first.`,
-                    }),
-                }],
-        };
-    }
-    const leadId = `LEAD-${Date.now().toString(36).toUpperCase()}`;
-    const estimatedResponseTime = pro.availability === "available_now" ? "within 1-2 hours" :
-        pro.availability === "available_this_week" ? "within 24 hours" :
-            "within 2-3 business days";
+}, async (params) => {
+    const result = await requestQuote(params);
     return {
         content: [{
                 type: "text",
-                text: JSON.stringify({
-                    success: true,
-                    leadId,
-                    message: `Your quote request has been sent to ${pro.name} at ${pro.businessName}!`,
-                    professional: {
-                        name: pro.name,
-                        businessName: pro.businessName,
-                        phone: pro.phone,
-                        rating: pro.rating,
-                        badges: pro.badges,
-                    },
-                    quoteDetails: {
-                        service: service_needed,
-                        homeownerName: homeowner_name,
-                        zip: homeowner_zip,
-                        timing: preferred_timing.replace(/_/g, " "),
-                        notes: notes ?? "None provided",
-                    },
-                    nextSteps: [
-                        `${pro.name} should respond ${estimatedResponseTime}.`,
-                        "You'll receive a confirmation email from Angi with your lead ID.",
-                        "Track this request at angi.com/my-projects.",
-                        "We recommend getting 2-3 quotes before deciding.",
-                    ],
-                    angiTrackingUrl: `https://www.angi.com/my-projects/${leadId}`,
-                }),
+                text: JSON.stringify(result),
             }],
     };
 });
@@ -236,7 +234,32 @@ const httpServer = http.createServer(async (req, res) => {
         res.end(JSON.stringify({ status: "ok", server: "angi-mcp", version: "1.0.0" }));
         return;
     }
-    // MCP endpoint
+    // Demo API endpoints (simple REST for browser demo)
+    if (req.method === "POST" && req.url === "/api/search") {
+        const body = await readBody(req);
+        const params = JSON.parse(body.toString());
+        const result = await searchProfessionals(params);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+        return;
+    }
+    if (req.method === "POST" && req.url === "/api/advice") {
+        const body = await readBody(req);
+        const params = JSON.parse(body.toString());
+        const result = await getHomeAdvice(params);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+        return;
+    }
+    if (req.method === "POST" && req.url === "/api/quote") {
+        const body = await readBody(req);
+        const params = JSON.parse(body.toString());
+        const result = await requestQuote(params);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+        return;
+    }
+    // MCP endpoint (for Claude Desktop)
     if (req.url === "/mcp" || req.url === "/") {
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined, // stateless mode

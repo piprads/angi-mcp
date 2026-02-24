@@ -344,8 +344,8 @@
     </div>
 
     <script>
-        const MCP_URL = 'https://angi-mcp-production.up.railway.app/mcp';
-        const HEALTH_URL = 'https://angi-mcp-production.up.railway.app/health';
+        const BASE_URL = 'https://angi-mcp-production.up.railway.app';
+        const HEALTH_URL = BASE_URL + '/health';
 
         // Check server status
         async function checkServerStatus() {
@@ -358,23 +358,14 @@
             }
         }
 
-        // Call MCP tool
-        async function callMCPTool(toolName, params) {
-            const response = await fetch(MCP_URL, {
+        // Call API endpoint
+        async function callAPI(endpoint, params) {
+            const response = await fetch(BASE_URL + endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json, text/event-stream',
                 },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    id: Date.now(),
-                    method: 'tools/call',
-                    params: {
-                        name: toolName,
-                        arguments: params
-                    }
-                })
+                body: JSON.stringify(params)
             });
 
             const data = await response.json();
@@ -386,20 +377,7 @@
             const resultDiv = document.getElementById(elementId);
             resultDiv.className = 'result show ' + (isError ? 'error' : 'success');
             
-            let content = '';
-            if (isError) {
-                content = data.message || JSON.stringify(data, null, 2);
-            } else if (data.result && data.result.content && data.result.content[0]) {
-                const text = data.result.content[0].text;
-                try {
-                    const parsed = JSON.parse(text);
-                    content = JSON.stringify(parsed, null, 2);
-                } catch {
-                    content = text;
-                }
-            } else {
-                content = JSON.stringify(data, null, 2);
-            }
+            const content = JSON.stringify(data, null, 2);
             
             resultDiv.innerHTML = `
                 <div class="result-title">${isError ? '❌ Error' : '✅ Success'}</div>
@@ -422,10 +400,10 @@
                     max_results: 3
                 };
                 
-                const result = await callMCPTool('search_professionals', params);
+                const result = await callAPI('/api/search', params);
                 displayResult('searchResult', result);
             } catch (error) {
-                displayResult('searchResult', error, true);
+                displayResult('searchResult', { message: error.message }, true);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Search Professionals';
@@ -444,10 +422,10 @@
                     question: document.getElementById('question').value
                 };
                 
-                const result = await callMCPTool('get_home_advice', params);
+                const result = await callAPI('/api/advice', params);
                 displayResult('adviceResult', result);
             } catch (error) {
-                displayResult('adviceResult', error, true);
+                displayResult('adviceResult', { message: error.message }, true);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Get Advice';
@@ -471,10 +449,10 @@
                     notes: document.getElementById('notes').value || undefined
                 };
                 
-                const result = await callMCPTool('request_quote', params);
+                const result = await callAPI('/api/quote', params);
                 displayResult('quoteResult', result);
             } catch (error) {
-                displayResult('quoteResult', error, true);
+                displayResult('quoteResult', { message: error.message }, true);
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Request Quote';
