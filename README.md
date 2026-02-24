@@ -6,6 +6,8 @@ A working Model Context Protocol (MCP) server demonstrating how Angi integrates 
 
 **🌐 Try the Live Demo:** https://piprads.github.io/angi-mcp/
 
+**💬 ChatGPT Custom GPT:** [Setup Guide](./CHATGPT_SETUP.md) — Create your own AI assistant (requires ChatGPT Plus)
+
 **📖 Full Documentation:** [DEMO.md](./DEMO.md) — Complete guide with sample inputs/outputs, architecture, and case study context
 
 **🚀 MCP Server:** https://angi-mcp-production.up.railway.app
