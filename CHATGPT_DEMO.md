@@ -34,6 +34,24 @@ Find me a plumber in zip code 10001
 3. Receives Marcus Johnson's info (4.9★, $95-145/hr, available now)
 4. Formats it naturally and presents it to you
 
+**Actual Response (from live demo):**
+> Talked to angi-mcp-production.up.railway.app ✓
+>
+> Here's a plumber in 10001 (Manhattan) from this demo prototype (mock data; not a real booking service):
+>
+> ✅ **Plumber match**
+>
+> **Johnson Plumbing & Drain (Marcus Johnson)**
+> - **Rating:** 4.9 ⭐ (312 reviews)
+> - **Experience:** 14 years in business
+> - **Availability:** Available now
+> - **Pricing:** $95–$145/hr
+> - **Specialties:** Emergency repairs, drain issues, water heater replacement
+> - **Badges:** Angi Certified • Background Checked • Top Pro 2024
+> - **Phone:** (212) 555-0192
+>
+> If you tell me what you need (e.g., clogged drain, leak, water heater, toilet install) and when you want them out, I can submit a **quote request** to this pro for you (still within the demo).
+
 **Expected response:**
 > I found an excellent plumber in your area:
 > 
@@ -319,6 +337,29 @@ To turn this demo into a production integration:
 4. **Demonstrate lead generation** - Show the full funnel
 5. **Compare platforms** - Mention MCP for Claude, Actions for ChatGPT
 6. **Discuss production path** - Show this is a real architecture
+
+---
+
+---
+
+## 📸 Live Demo Screenshots
+
+### Working Example: Search for Plumbers
+
+The screenshot shows the ChatGPT Custom GPT successfully:
+1. Calling the Railway API (`Talked to angi-mcp-production.up.railway.app`)
+2. Returning Marcus Johnson with complete professional details
+3. Formatting the response naturally with emoji and structure
+4. Offering to submit a quote request
+
+**Key Elements Visible:**
+- ✅ API connection confirmation
+- ✅ Professional details (rating, reviews, experience, pricing)
+- ✅ Badges and certifications
+- ✅ Call-to-action for quote requests
+- ✅ Demo disclaimer (mock data notice)
+
+This demonstrates the full integration working end-to-end with natural language interface.
 
 ---
 
