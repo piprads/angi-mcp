@@ -1,0 +1,232 @@
+openapi: 3.0.0
+info:
+  title: Angi Home Services API
+  description: API for searching home service professionals, getting home improvement advice, and requesting quotes from Angi verified pros.
+  version: 1.0.0
+servers:
+  - url: https://angi-mcp-production.up.railway.app
+    description: Production server
+
+paths:
+  /api/search:
+    post:
+      operationId: searchProfessionals
+      summary: Search for home service professionals
+      description: Find verified Angi professionals by service category, location, and availability. Returns professionals with ratings, reviews, pricing, and contact information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - category
+              properties:
+                category:
+                  type: string
+                  description: Service category like plumbing, electrical, hvac, roofing, cleaning, or remodeling
+                  example: plumbing
+                zip_code:
+                  type: string
+                  description: 5-digit US zip code for the homeowner's location
+                  example: "10001"
+                availability:
+                  type: string
+                  enum: [any, available_now, available_this_week]
+                  default: any
+                  description: Filter professionals by their availability
+                max_results:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  default: 3
+                  description: Maximum number of results to return
+      responses:
+        '200':
+          description: Successfully found professionals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  totalFound:
+                    type: integer
+                  searchedCategory:
+                    type: string
+                  zipCode:
+                    type: string
+                  professionals:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        businessName:
+                          type: string
+                        category:
+                          type: string
+                        rating:
+                          type: number
+                        reviewCount:
+                          type: integer
+                        yearsInBusiness:
+                          type: integer
+                        availability:
+                          type: string
+                        hourlyRate:
+                          type: string
+                        phone:
+                          type: string
+                        bio:
+                          type: string
+                        badges:
+                          type: array
+                          items:
+                            type: string
+                        angiProfileUrl:
+                          type: string
+                  ctaMessage:
+                    type: string
+
+  /api/advice:
+    post:
+      operationId: getHomeAdvice
+      summary: Get home improvement advice
+      description: Answer homeowner questions about home repairs, maintenance, and renovations. Provides expert guidance including DIY tips, cost estimates, difficulty levels, and whether to hire a professional.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - question
+              properties:
+                question:
+                  type: string
+                  description: The homeowner's question about home improvement, repair, or renovation
+                  example: How do I fix a leaky faucet?
+      responses:
+        '200':
+          description: Successfully retrieved advice
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  question:
+                    type: string
+                  topic:
+                    type: string
+                  answer:
+                    type: string
+                  estimatedCost:
+                    type: string
+                  difficulty:
+                    type: string
+                    enum: [DIY, hire_a_pro, either]
+                  relatedCategories:
+                    type: array
+                    items:
+                      type: string
+                  suggestedAction:
+                    type: string
+
+  /api/quote:
+    post:
+      operationId: requestQuote
+      summary: Request a quote from a professional
+      description: Submit a quote request to a specific Angi professional. This initiates the lead generation process and connects the homeowner with the pro. Use the professional ID obtained from the search_professionals endpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - professional_id
+                - service_needed
+                - homeowner_name
+                - homeowner_zip
+                - preferred_timing
+              properties:
+                professional_id:
+                  type: string
+                  description: The professional's ID from search results (e.g., pro-001)
+                  example: pro-001
+                service_needed:
+                  type: string
+                  description: Brief description of the service or project needed
+                  example: Fix leaking kitchen sink
+                homeowner_name:
+                  type: string
+                  description: The homeowner's first and last name
+                  example: John Doe
+                homeowner_zip:
+                  type: string
+                  description: The homeowner's 5-digit zip code
+                  example: "10001"
+                preferred_timing:
+                  type: string
+                  enum: [as_soon_as_possible, within_a_week, within_a_month, just_getting_estimates]
+                  description: How urgently the homeowner needs the service
+                  example: as_soon_as_possible
+                notes:
+                  type: string
+                  description: Additional project details or special requirements
+                  example: Leak is under the cabinet and getting worse
+      responses:
+        '200':
+          description: Successfully submitted quote request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  leadId:
+                    type: string
+                  message:
+                    type: string
+                  professional:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      businessName:
+                        type: string
+                      phone:
+                        type: string
+                      rating:
+                        type: number
+                      badges:
+                        type: array
+                        items:
+                          type: string
+                  quoteDetails:
+                    type: object
+                    properties:
+                      service:
+                        type: string
+                      homeownerName:
+                        type: string
+                      zip:
+                        type: string
+                      timing:
+                        type: string
+                      notes:
+                        type: string
+                  nextSteps:
+                    type: array
+                    items:
+                      type: string
+                  angiTrackingUrl:
+                    type: string
